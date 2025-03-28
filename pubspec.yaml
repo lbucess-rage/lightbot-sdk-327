@@ -1,7 +1,7 @@
 name: lightbot_sdk_v3271
 description: 웹챗 서비스를 Flutter 앱에 통합하기 위한 SDK (Flutter 3.27.1 호환)
 version: 0.0.1
-homepage: https://github.com/lbucess/lightbot_sdk
+homepage: https://github.com/lbucess-rage/lightbot-sdk-327
 
 environment:
     sdk: '>=3.2.0 <4.0.0'

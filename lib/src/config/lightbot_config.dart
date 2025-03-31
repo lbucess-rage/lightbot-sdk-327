@@ -12,6 +12,9 @@ class LightbotConfig {
   /// 스케일
   final String scale;
 
+  /// 인증키
+  final String authKey;
+
   /// 추가 파라미터
   final Map<String, dynamic> additionalParams;
 
@@ -22,6 +25,7 @@ class LightbotConfig {
     this.memberId = '',
     this.userName = '',
     this.scale = '0.95',
+    this.authKey = '',
     this.additionalParams = const {},
   });
 
@@ -31,6 +35,7 @@ class LightbotConfig {
       'memberId': memberId,
       'userName': userName,
       'scale': scale,
+      'authKey': authKey,
       ...additionalParams,
     };
   }
@@ -41,6 +46,7 @@ class LightbotConfig {
     String? memberId,
     String? userName,
     String? scale,
+    String? authKey,
     Map<String, dynamic>? additionalParams,
   }) {
     return LightbotConfig(
@@ -48,6 +54,7 @@ class LightbotConfig {
       memberId: memberId ?? this.memberId,
       userName: userName ?? this.userName,
       scale: scale ?? this.scale,
+      authKey: authKey ?? this.authKey,
       additionalParams: additionalParams ?? this.additionalParams,
     );
   }

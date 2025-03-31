@@ -91,8 +91,9 @@ LightbotSDK.showAsDialog(
     userName: '커스텀 사용자',
     scale: '0.9',
     additionalParams: {
-      'theme': 'dark',
-      'customParam': '값',
+        'ci': 'n0veu3t3gd648paqvp10lzkw',
+        'directUrl':
+            'https://lightbot-dev.lbucess.com/domain-cz5g02d?memberId=r1111&ci=n0veu3t3gd648paqvp10lzkw',
     },
   ),
 )

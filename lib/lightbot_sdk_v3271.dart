@@ -72,12 +72,85 @@ class LightbotSDK {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => SizedBox(
-        height: MediaQuery.of(context).size.height * 0.9,
-        child: LightbotChatOverlay(
-          config: chatConfig,
-          onClose: () {
-            Navigator.of(context).pop();
+      enableDrag: true,
+      isDismissible: true,
+      useSafeArea: true,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.95,
+      ),
+      builder: (context) => GestureDetector(
+        // 이 GestureDetector는 바텀시트 내부 클릭이 바텀시트를 닫지 않도록 합니다
+        onTap: () {},
+        child: DraggableScrollableSheet(
+          initialChildSize: 0.9,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return Material(
+              color: Colors.transparent,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // 드래그 핸들 영역 (바텀시트로 작동하는 영역)
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        width: double.infinity,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            // 드래그 핸들
+                            Container(
+                              width: 40,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                            // 닫기 버튼 (오른쪽)
+                            Positioned(
+                              right: 8,
+                              child: IconButton(
+                                icon: const Icon(Icons.close, size: 24),
+                                onPressed: () => Navigator.of(context).pop(),
+                                color: Colors.grey.shade700,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // 웹뷰 영역 (내부 스크롤 작동)
+                      Expanded(
+                        child: LightbotChatOverlay(
+                          config: chatConfig,
+                          onClose: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
           },
         ),
       ),

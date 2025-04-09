@@ -61,7 +61,7 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
-            print('웹뷰 로딩 시작: $url');
+            // print('웹뷰 로딩 시작: $url');
           },
           onPageFinished: (url) {
             setState(() {
@@ -69,8 +69,8 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
             });
 
             // 화면 크기가 변경되었을 때 스케일 값을 업데이트
-            final screenWidth = MediaQuery.of(context).size.width;
-            final screenHeight = MediaQuery.of(context).size.height;
+            // final screenWidth = MediaQuery.of(context).size.width;
+            // final screenHeight = MediaQuery.of(context).size.height;
 
             // 화면 크기에 따라 스케일 조정 (외부 HTML에 전달된 값이 우선함)
             // if (screenWidth < 320 || screenHeight < 600) {
@@ -79,12 +79,12 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
             //   );
             // }
 
-            // 웹뷰 크기 정보 전달
-            _webViewController.runJavaScript('''
-              window.viewportWidth = ${screenWidth};
-              window.viewportHeight = ${screenHeight};
-              console.log('뷰포트 크기:', ${screenWidth}, ${screenHeight});
-            ''');
+            // // 웹뷰 크기 정보 전달
+            // _webViewController.runJavaScript('''
+            //   window.viewportWidth = ${screenWidth};
+            //   window.viewportHeight = ${screenHeight};
+            //   console.log('뷰포트 크기:', ${screenWidth}, ${screenHeight});
+            // ''');
 
             // 스크롤 동작 최적화를 위한 JavaScript 실행
             _webViewController.runJavaScript('''
@@ -193,7 +193,7 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
             ''');
           },
           onWebResourceError: (WebResourceError error) {
-            print('웹뷰 에러: ${error.description}, 에러 코드: ${error.errorCode}');
+            // print('웹뷰 에러: ${error.description}, 에러 코드: ${error.errorCode}');
           },
         ),
       )
@@ -206,22 +206,22 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
   }
 
   void _handleJavaScriptMessage(JavaScriptMessage message) {
-    print('웹챗으로부터 메시지 수신: ${message.message}');
+    // print('웹챗으로부터 메시지 수신: ${message.message}');
     try {
       final data = jsonDecode(message.message);
       if (data is Map && data.containsKey('type')) {
         switch (data['type']) {
           case 'status':
-            print('웹챗 상태 변경: ${data['status']}');
+            // print('웹챗 상태 변경: ${data['status']}');
             break;
           case 'message':
-            print('채팅 메시지: ${data['content']}');
-            print('챗봇 응답: ${data['response']}');
+            // print('채팅 메시지: ${data['content']}');
+            // print('챗봇 응답: ${data['response']}');
             break;
         }
       }
     } catch (e) {
-      print('메시지 파싱 오류: $e');
+      // print('메시지 파싱 오류: $e');
     }
   }
 
@@ -234,17 +234,16 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
   void _closeOverlay() {
     try {
       // 애니메이션 역방향 실행
-      _animationController.reverse().then((value) {
-        // onClose 콜백이 있으면 실행
-        if (widget.onClose != null) {
-          widget.onClose!();
-        } else {
-          // 현재 컨텍스트에서 직접 pop 시도
-          Navigator.of(context, rootNavigator: true).pop();
-        }
-      });
+      _animationController.reverse();
+
+      // onClose 콜백이 있으면 실행
+      if (widget.onClose != null) {
+        widget.onClose!();
+      } else {
+        // 현재 컨텍스트에서 직접 pop 시도
+        Navigator.of(context, rootNavigator: true).pop();
+      }
     } catch (e) {
-      print('닫기 오류: $e');
       // 강제 종료 시도
       if (widget.onClose != null) {
         widget.onClose!();
@@ -252,7 +251,7 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
         try {
           Navigator.of(context, rootNavigator: true).pop();
         } catch (e) {
-          print('강제 닫기도 실패: $e');
+          // 무시
         }
       }
     }
@@ -260,7 +259,7 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
 
   @override
   Widget build(BuildContext context) {
-    final screenSize = MediaQuery.of(context).size;
+    // final screenSize = MediaQuery.of(context).size;
 
     double horizontalPadding;
     double verticalPadding;
@@ -304,10 +303,10 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
                   boxShadow: isBottomSheetMode
                       ? []
                       : [
-                          BoxShadow(
+                          const BoxShadow(
                             color: Colors.black26,
                             blurRadius: 10,
-                            offset: const Offset(0, 5),
+                            offset: Offset(0, 5),
                           ),
                         ],
                 ),
@@ -346,19 +345,6 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
                             // 닫기 함수 호출
                             _closeOverlay();
 
-                            // 추가 보험으로, 직접 Navigator.pop 시도
-                            Future.delayed(const Duration(milliseconds: 300),
-                                () {
-                              try {
-                                if (mounted && Navigator.canPop(context)) {
-                                  Navigator.of(context, rootNavigator: true)
-                                      .pop();
-                                }
-                              } catch (e) {
-                                print('추가 닫기 시도 실패: $e');
-                              }
-                            });
-
                             // 콜백이 있으면 호출
                             if (widget.onClose != null) {
                               widget.onClose!();
@@ -371,10 +357,10 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
                               color: Colors.white,
                               shape: BoxShape.circle,
                               boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
+                                const BoxShadow(
+                                  color: Color.fromARGB(51, 0, 0, 0),
                                   blurRadius: 4,
-                                  offset: const Offset(0, 2),
+                                  offset: Offset(0, 2),
                                 ),
                               ],
                             ),

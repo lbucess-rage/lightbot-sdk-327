@@ -43,21 +43,24 @@ class LightbotSDK {
   }) async {
     final chatConfig = config ?? _instance._config;
 
-    return showGeneralDialog(
+    // 직접 다이얼로그 구현으로 변경
+    return showDialog(
       context: context,
       barrierDismissible: barrierDismissible,
-      barrierLabel: '웹챗 닫기',
-      pageBuilder: (context, animation, secondaryAnimation) {
-        return Material(
-          type: MaterialType.transparency,
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: EdgeInsets.zero,
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height,
           child: LightbotChatOverlay(
             config: chatConfig,
             onClose: () {
-              Navigator.of(context).pop();
+              Navigator.of(dialogContext).pop();
             },
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
@@ -76,15 +79,15 @@ class LightbotSDK {
       isDismissible: true,
       useSafeArea: true,
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.95,
+        maxHeight: MediaQuery.of(context).size.height * 0.98,
       ),
       builder: (context) => GestureDetector(
         // 이 GestureDetector는 바텀시트 내부 클릭이 바텀시트를 닫지 않도록 합니다
         onTap: () {},
         child: DraggableScrollableSheet(
-          initialChildSize: 0.9,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
+          initialChildSize: 0.97,
+          minChildSize: 0.6,
+          maxChildSize: 0.98,
           expand: false,
           builder: (context, scrollController) {
             return Material(
@@ -127,10 +130,14 @@ class LightbotSDK {
                             ),
                             // 닫기 버튼 (오른쪽)
                             Positioned(
-                              right: 8,
+                              right: 16,
                               child: IconButton(
-                                icon: const Icon(Icons.close, size: 24),
-                                onPressed: () => Navigator.of(context).pop(),
+                                icon: const Icon(Icons.close, size: 28),
+                                onPressed: () {
+                                  // 닫기 버튼을 눌렀을 때 바텀시트 닫기
+                                  Navigator.of(context).pop();
+                                },
+                                padding: const EdgeInsets.all(8),
                                 color: Colors.grey.shade700,
                               ),
                             ),
@@ -142,7 +149,10 @@ class LightbotSDK {
                         child: LightbotChatOverlay(
                           config: chatConfig,
                           onClose: () {
-                            Navigator.of(context).pop();
+                            // 안전하게 바텀시트 닫기
+                            if (Navigator.of(context).canPop()) {
+                              Navigator.of(context).pop();
+                            }
                           },
                         ),
                       ),
@@ -154,6 +164,7 @@ class LightbotSDK {
           },
         ),
       ),
+      routeSettings: const RouteSettings(arguments: "bottomSheet"),
     );
   }
 }

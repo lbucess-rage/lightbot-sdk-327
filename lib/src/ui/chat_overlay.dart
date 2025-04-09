@@ -73,11 +73,11 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
             final screenHeight = MediaQuery.of(context).size.height;
 
             // 화면 크기에 따라 스케일 조정 (외부 HTML에 전달된 값이 우선함)
-            if (screenWidth < 320 || screenHeight < 600) {
-              _webViewController.runJavaScript(
-                'document.documentElement.style.setProperty("--chat-scale", "0.75");',
-              );
-            }
+            // if (screenWidth < 320 || screenHeight < 600) {
+            //   _webViewController.runJavaScript(
+            //     'document.documentElement.style.setProperty("--chat-scale", "0.75");',
+            //   );
+            // }
 
             // 웹뷰 크기 정보 전달
             _webViewController.runJavaScript('''
@@ -232,11 +232,30 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
   }
 
   void _closeOverlay() {
-    _animationController.reverse().then((value) {
+    try {
+      // 애니메이션 역방향 실행
+      _animationController.reverse().then((value) {
+        // onClose 콜백이 있으면 실행
+        if (widget.onClose != null) {
+          widget.onClose!();
+        } else {
+          // 현재 컨텍스트에서 직접 pop 시도
+          Navigator.of(context, rootNavigator: true).pop();
+        }
+      });
+    } catch (e) {
+      print('닫기 오류: $e');
+      // 강제 종료 시도
       if (widget.onClose != null) {
         widget.onClose!();
+      } else {
+        try {
+          Navigator.of(context, rootNavigator: true).pop();
+        } catch (e) {
+          print('강제 닫기도 실패: $e');
+        }
       }
-    });
+    }
   }
 
   @override
@@ -245,40 +264,19 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
 
     double horizontalPadding;
     double verticalPadding;
+    horizontalPadding = 0.0;
+    verticalPadding = 0.0;
 
-    if (screenSize.width < 320) {
-      horizontalPadding = 4.0;
-    } else if (screenSize.width < 360) {
-      horizontalPadding = 8.0;
-    } else if (screenSize.width < 400) {
-      horizontalPadding = 12.0;
-    } else {
-      horizontalPadding = 16.0;
-    }
-
-    if (screenSize.height < 600) {
-      verticalPadding = 16.0;
-    } else if (screenSize.height < 700) {
-      verticalPadding = 24.0;
-    } else if (screenSize.height < 800) {
-      verticalPadding = 32.0;
-    } else {
-      verticalPadding = 48.0;
-    }
-
-    // 바텀시트에서 사용될 때는 패딩 조정
-    final isInBottomSheet = ModalRoute.of(context)?.settings.name == null;
-    if (isInBottomSheet) {
-      horizontalPadding = 0.0;
-      verticalPadding = 0.0;
-    }
+    // 대화상자인지, 바텀시트인지 확인하기 위해 widget.onClose 함수 사용
+    final isBottomSheetMode = widget.onClose != null &&
+        ModalRoute.of(context)?.settings.arguments == "bottomSheet";
 
     return FadeTransition(
       opacity: _animation,
       child: Stack(
         children: [
           // 대화상자 사용 시에만 배경 딤 처리 표시
-          if (!isInBottomSheet)
+          if (!isBottomSheetMode)
             GestureDetector(
               onTap: _closeOverlay,
               child: Container(
@@ -300,10 +298,10 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
                     MediaQuery.of(context).size.height - (verticalPadding * 2),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: isInBottomSheet
+                  borderRadius: isBottomSheetMode
                       ? BorderRadius.zero
                       : BorderRadius.circular(16),
-                  boxShadow: isInBottomSheet
+                  boxShadow: isBottomSheetMode
                       ? []
                       : [
                           BoxShadow(
@@ -314,7 +312,7 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
                         ],
                 ),
                 child: ClipRRect(
-                  borderRadius: isInBottomSheet
+                  borderRadius: isBottomSheetMode
                       ? BorderRadius.zero
                       : BorderRadius.circular(16),
                   child: Stack(
@@ -339,35 +337,55 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
                         },
                       ),
 
-                      // 닫기 버튼 (대화상자 모드에서만 표시)
-                      if (!isInBottomSheet)
-                        Positioned(
-                          top: 12,
-                          right: 12,
-                          child: InkWell(
-                            onTap: _closeOverlay,
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.2),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: const Icon(
-                                Icons.close,
-                                color: Colors.black54,
-                                size: 20,
-                              ),
+                      // 닫기 버튼 (항상 표시)
+                      Positioned(
+                        top: 20,
+                        right: 20,
+                        child: InkWell(
+                          onTap: () {
+                            // 닫기 함수 호출
+                            _closeOverlay();
+
+                            // 추가 보험으로, 직접 Navigator.pop 시도
+                            Future.delayed(const Duration(milliseconds: 300),
+                                () {
+                              try {
+                                if (mounted && Navigator.canPop(context)) {
+                                  Navigator.of(context, rootNavigator: true)
+                                      .pop();
+                                }
+                              } catch (e) {
+                                print('추가 닫기 시도 실패: $e');
+                              }
+                            });
+
+                            // 콜백이 있으면 호출
+                            if (widget.onClose != null) {
+                              widget.onClose!();
+                            }
+                          },
+                          child: Container(
+                            width: 44, // 더 큰 터치 영역
+                            height: 44, // 더 큰 터치 영역
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.close,
+                              color: Colors.black54,
+                              size: 24, // 더 큰 아이콘
                             ),
                           ),
                         ),
+                      ),
 
                       // 로딩 표시
                       if (_isLoading)

@@ -43,24 +43,21 @@ class LightbotSDK {
   }) async {
     final chatConfig = config ?? _instance._config;
 
-    // 직접 다이얼로그 구현으로 변경
-    return showDialog(
+    return showGeneralDialog(
       context: context,
       barrierDismissible: barrierDismissible,
-      builder: (dialogContext) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: EdgeInsets.zero,
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
+      barrierLabel: '웹챗 닫기',
+      pageBuilder: (context, animation, secondaryAnimation) {
+        return Material(
+          type: MaterialType.transparency,
           child: LightbotChatOverlay(
             config: chatConfig,
             onClose: () {
-              Navigator.of(dialogContext).pop();
+              Navigator.of(context).pop();
             },
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -79,15 +76,15 @@ class LightbotSDK {
       isDismissible: true,
       useSafeArea: true,
       constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.98,
+        maxHeight: MediaQuery.of(context).size.height,
       ),
       builder: (context) => GestureDetector(
         // 이 GestureDetector는 바텀시트 내부 클릭이 바텀시트를 닫지 않도록 합니다
         onTap: () {},
         child: DraggableScrollableSheet(
-          initialChildSize: 0.97,
-          minChildSize: 0.6,
-          maxChildSize: 0.98,
+          initialChildSize: 0.99,
+          minChildSize: 0.99,
+          maxChildSize: 0.99,
           expand: false,
           builder: (context, scrollController) {
             return Material(
@@ -101,7 +98,7 @@ class LightbotSDK {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withAlpha(26),
+                      color: Colors.black.withOpacity(0.1),
                       blurRadius: 10,
                       offset: const Offset(0, -2),
                     ),
@@ -128,19 +125,15 @@ class LightbotSDK {
                                 borderRadius: BorderRadius.circular(2),
                               ),
                             ),
-                            // 닫기 버튼 (오른쪽)
-                            Positioned(
-                              right: 16,
-                              child: IconButton(
-                                icon: const Icon(Icons.close, size: 28),
-                                onPressed: () {
-                                  // 닫기 버튼을 눌렀을 때 바텀시트 닫기
-                                  Navigator.of(context).pop();
-                                },
-                                padding: const EdgeInsets.all(8),
-                                color: Colors.grey.shade700,
-                              ),
-                            ),
+                            // 닫기 버튼 (오른쪽) -> 고객 요청으로 삭제
+                            // Positioned(
+                            //   right: 8,
+                            //   child: IconButton(
+                            //     icon: const Icon(Icons.close, size: 24),
+                            //     onPressed: () => Navigator.of(context).pop(),
+                            //     color: Colors.grey.shade700,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),
@@ -149,10 +142,7 @@ class LightbotSDK {
                         child: LightbotChatOverlay(
                           config: chatConfig,
                           onClose: () {
-                            // 안전하게 바텀시트 닫기
-                            if (Navigator.of(context).canPop()) {
-                              Navigator.of(context).pop();
-                            }
+                            Navigator.of(context).pop();
                           },
                         ),
                       ),
@@ -164,7 +154,6 @@ class LightbotSDK {
           },
         ),
       ),
-      routeSettings: const RouteSettings(arguments: "bottomSheet"),
     );
   }
 }

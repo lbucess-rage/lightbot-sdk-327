@@ -20,7 +20,8 @@ class LightbotConfig {
 
   /// 생성자
   const LightbotConfig({
-    this.externalUrl = '',
+    this.externalUrl =
+        'https://lightbot-rage.s3.ap-northeast-2.amazonaws.com/lightbot/page/v1/chatbot_external.html',
     this.memberId = '',
     this.userName = '',
     this.scale = '',

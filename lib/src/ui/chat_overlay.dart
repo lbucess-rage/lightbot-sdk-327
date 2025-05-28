@@ -20,11 +20,13 @@ class LightbotChatOverlay extends StatefulWidget {
 }
 
 class _LightbotChatOverlayState extends State<LightbotChatOverlay>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late AnimationController _animationController;
   late Animation<double> _animation;
   late WebViewController _webViewController;
   bool _isLoading = true;
+  double? _previousKeyboardHeight;
+  bool _isKeyboardVisible = false;
 
   @override
   void initState() {
@@ -38,6 +40,9 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
       curve: Curves.easeOut,
     );
     _animationController.forward();
+
+    // 키보드 감지를 위한 옵저버 등록
+    WidgetsBinding.instance.addObserver(this);
 
     _initWebView();
   }
@@ -320,7 +325,76 @@ class _LightbotChatOverlayState extends State<LightbotChatOverlay>
   }
 
   @override
+  void didChangeMetrics() {
+    super.didChangeMetrics();
+
+    // 다음 프레임에서 키보드 높이 확인
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+        _handleKeyboardChange(keyboardHeight);
+      }
+    });
+  }
+
+  void _handleKeyboardChange(double keyboardHeight) {
+    if (!_isLoading) {
+      final isKeyboardCurrentlyVisible = keyboardHeight > 0;
+
+      // 키보드 상태가 실제로 변경되었을 때만 이벤트 전송
+      if (_isKeyboardVisible != isKeyboardCurrentlyVisible) {
+        _isKeyboardVisible = isKeyboardCurrentlyVisible;
+        _previousKeyboardHeight = keyboardHeight;
+
+        try {
+          if (_isKeyboardVisible) {
+            print('키보드 나타남: ${keyboardHeight}px');
+            _webViewController.runJavaScript('''
+              try {
+                if (document.readyState === 'complete') {
+                  window.dispatchEvent(new CustomEvent('keyboardShow', {
+                    detail: { height: $keyboardHeight }
+                  }));
+                  console.log('키보드 표시 이벤트 전송됨:', $keyboardHeight);
+                }
+              } catch (e) {
+                console.error('키보드 표시 이벤트 오류:', e);
+              }
+            ''');
+          } else {
+            print('키보드 숨겨짐');
+            _webViewController.runJavaScript('''
+              try {
+                if (document.readyState === 'complete') {
+                  window.dispatchEvent(new CustomEvent('keyboardHide'));
+                  console.log('키보드 숨김 이벤트 전송됨');
+                }
+              } catch (e) {
+                console.error('키보드 숨김 이벤트 오류:', e);
+              }
+            ''');
+          }
+        } catch (e) {
+          print('JavaScript 실행 오류: $e');
+        }
+      }
+      // 키보드가 이미 표시되어 있고 높이만 변경된 경우 (선택적으로 높이 업데이트 이벤트 전송)
+      else if (_isKeyboardVisible &&
+          _previousKeyboardHeight != keyboardHeight) {
+        _previousKeyboardHeight = keyboardHeight;
+        // 높이 변경 이벤트는 필요한 경우에만 주석 해제
+        // _webViewController.runJavaScript('''
+        //   window.dispatchEvent(new CustomEvent('keyboardHeightChange', {
+        //     detail: { height: $keyboardHeight }
+        //   }));
+        // ''');
+      }
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _animationController.dispose();
     super.dispose();
   }
